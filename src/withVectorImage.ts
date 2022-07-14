@@ -7,7 +7,7 @@ import {
   withDangerousMod,
 } from "@expo/config-plugins";
 import { ExpoConfig } from "@expo/config-types";
-import { execSync, exec } from "child_process";
+let MONO_REPO = false;
 
 export const addStripSvgsImplementation = (projectBuildGradle: string) => {
   const addString = `apply from: new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim(), "../../react-native-vector-image/strip_svgs.gradle")`;
@@ -69,39 +69,61 @@ const withIosPlugin: ConfigPlugin = (c: ExpoConfig) => {
   });
 };
 
-// export const withIosAssets: ConfigPlugin = (config) => {
-//   return withDangerousMod(config, [
-//     "ios",
-//     async (config) => {
-//       // No modifications are made to the config
-//       // await setIconsAsync(config, config.modRequest.projectRoot);
+const getCliPath = (projectRoot: string) => {
+  let cliPath;
+  if (MONO_REPO) {
+    cliPath =
+      projectRoot +
+      "/../../node_modules/react-native-vector-image/src/cli/index";
+  } else {
+    cliPath =
+      projectRoot + "/node_modules/react-native-vector-image/src/cli/index";
+  }
+  return cliPath;
+};
 
-//       const output = exec(); // the default is 'buffer'
-//       console.log("Output was:\n", output);
-//       return config;
-//     },
-//   ]);
-// };
-// export const withAndroidAssets: ConfigPlugin = (config) => {
-//   return withDangerousMod(config, [
-//     "android",
-//     async (config) => {
-//       // No modifications are made to the config
-//       // await setIconsAsync(config, config.modRequest.projectRoot);
-//       const output = execSync("ls", { encoding: "utf-8" }); // the default is 'buffer'
-//       console.log("Output was:\n", output);
-//       return config;
-//     },
-//   ]);
-// };
+export const withGenerateIosAssets: ConfigPlugin = (config) => {
+  return withDangerousMod(config, [
+    "ios",
+    async (config) => {
+      const appName = config.modRequest.projectName;
+      const cliPath = getCliPath(config.modRequest.projectRoot);
+      const cli = require(cliPath);
+      if (cli !== undefined || cli !== null) {
+        cli(
+          `generate --ios-output ios/${appName}/Images.xcassets --no-android-output`
+        );
+      }
+      return config;
+    },
+  ]);
+};
+export const withGenerateAndroidAssets: ConfigPlugin = (config) => {
+  return withDangerousMod(config, [
+    "android",
+    async (config) => {
+      const cliPath = getCliPath(config.modRequest.projectRoot);
+      const cli = require(cliPath);
+      if (cli !== undefined || cli !== null) {
+        cli(`generate --no-ios-output`);
+      }
+      return config;
+    },
+  ]);
+};
 
 /**
  * Apply VectorImage configuration for Expo SDK 42 projects.
  */
-const withVectorImage: ConfigPlugin = (config) => {
+const withVectorImage: ConfigPlugin<{ isMonorepo: boolean } | void> = (
+  config,
+  props
+) => {
+  MONO_REPO = props?.isMonorepo ?? false;
   config = withAndroidPlugin(config);
   config = withIosPlugin(config);
-
+  config = withGenerateIosAssets(config);
+  config = withGenerateAndroidAssets(config);
   return config;
 };
 

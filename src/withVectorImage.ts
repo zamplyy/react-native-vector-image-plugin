@@ -9,6 +9,27 @@ import {
 import { ExpoConfig } from "@expo/config-types";
 let MONO_REPO = false;
 
+export enum GenerateCommands {
+  EntryFile = "--entry-file",
+  Config = "--config",
+  ResetCache = "--reset-cache",
+}
+
+const DefaultCommands: { command: GenerateCommands; input: string }[] = [
+  {
+    command: GenerateCommands.EntryFile,
+    input: "index.js",
+  },
+  {
+    command: GenerateCommands.Config,
+    input: "metro.config.js",
+  },
+  {
+    command: GenerateCommands.ResetCache,
+    input: "false",
+  },
+];
+
 export const addStripSvgsImplementation = (projectBuildGradle: string) => {
   const addString = `apply from: new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim(), "../../react-native-vector-image/strip_svgs.gradle")`;
   const searchString = /"..\/react.gradle"\)\n/gm;
@@ -56,6 +77,7 @@ export const setPBXShellScriptBuildPhaseStripSvg = async (
           `\`node --print "require('path').dirname(require.resolve('react-native/package.json')) + '/../react-native-vector-image/strip_svgs.sh'"\``
         ),
       ];
+      // eslint-disable-next-line no-useless-escape
       buildPhase.shellScript = `\"${parts.join("\\n")}\"`;
     }
   }
@@ -82,7 +104,24 @@ const getCliPath = (projectRoot: string) => {
   return cliPath;
 };
 
-export const withGenerateIosAssets: ConfigPlugin = (config) => {
+export const getCommands = (commands = DefaultCommands) => {
+  const commandsMap = new Map<GenerateCommands, string>();
+  commands.forEach((c) => commandsMap.set(c.command, c.input));
+  DefaultCommands.forEach((c) => {
+    const exists = commandsMap.has(c.command);
+    if (!exists) {
+      commandsMap.set(c.command, c.input);
+    }
+  });
+  return Array.from(commandsMap)
+    .map((arr) => `${arr[0]} ${arr[1]}`)
+    .join(" ");
+};
+
+export const withGenerateIosAssets: ConfigPlugin<string | void> = (
+  config,
+  commands
+) => {
   return withDangerousMod(config, [
     "ios",
     async (config) => {
@@ -91,21 +130,24 @@ export const withGenerateIosAssets: ConfigPlugin = (config) => {
       const cli = require(cliPath);
       if (cli !== undefined || cli !== null) {
         cli(
-          `generate --ios-output ios/${appName}/Images.xcassets --no-android-output`
+          `generate --ios-output ios/${appName}/Images.xcassets --no-android-output ${commands}`
         );
       }
       return config;
     },
   ]);
 };
-export const withGenerateAndroidAssets: ConfigPlugin = (config) => {
+export const withGenerateAndroidAssets: ConfigPlugin<string | void> = (
+  config,
+  commands
+) => {
   return withDangerousMod(config, [
     "android",
     async (config) => {
       const cliPath = getCliPath(config.modRequest.projectRoot);
       const cli = require(cliPath);
       if (cli !== undefined || cli !== null) {
-        cli(`generate --no-ios-output`);
+        cli(`generate --no-ios-output ${commands}`);
       }
       return config;
     },
@@ -115,15 +157,41 @@ export const withGenerateAndroidAssets: ConfigPlugin = (config) => {
 /**
  * Apply VectorImage configuration for Expo SDK 42 projects.
  */
-const withVectorImage: ConfigPlugin<{ isMonorepo: boolean } | void> = (
-  config,
-  props
-) => {
+const withVectorImage: ConfigPlugin<
+  {
+    isMonorepo: boolean;
+    customMetroConfigFile: string;
+    resetCache: boolean;
+    customEntryFile: string;
+  } | void
+> = (config, props) => {
   MONO_REPO = props?.isMonorepo ?? false;
+
+  const commands: { command: GenerateCommands; input: string }[] = [];
+  if (props?.customEntryFile) {
+    commands.push({
+      command: GenerateCommands.EntryFile,
+      input: props?.customEntryFile,
+    });
+  }
+  if (props?.customMetroConfigFile) {
+    commands.push({
+      command: GenerateCommands.Config,
+      input: props?.customMetroConfigFile,
+    });
+  }
+  if (props?.resetCache) {
+    commands.push({
+      command: GenerateCommands.ResetCache,
+      input: `${props?.resetCache}`,
+    });
+  }
+  const commandsWithDefault = getCommands();
+
   config = withAndroidPlugin(config);
   config = withIosPlugin(config);
-  config = withGenerateIosAssets(config);
-  config = withGenerateAndroidAssets(config);
+  config = withGenerateIosAssets(config, commandsWithDefault);
+  config = withGenerateAndroidAssets(config, commandsWithDefault);
   return config;
 };
 

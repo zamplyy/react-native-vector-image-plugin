@@ -21,7 +21,17 @@ For bare React Native projects, you must ensure that you have [installed and con
 npm install react-native-vector-image-plugin
 ```
 
-
+// "plugins": [
+//   [
+//     "react-native-vector-image-plugin",
+//     {
+//       "isMonorepo": true,
+//       "customMetroConfigFile": "",
+//       "resetCache": true,
+//       "customEntryFile": ""
+//     }
+//   ]
+// ]
 
 
 # Contributing

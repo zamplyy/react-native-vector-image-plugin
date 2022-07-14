@@ -31,8 +31,13 @@
     "@expo/config-plugins": "~4.1.5"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.30.6",
+    "@typescript-eslint/parser": "^5.30.6",
+    "eslint": "^8.19.0",
     "expo-module-scripts": "^2.0.0",
-    "expo-yarn-workspaces": "^2.0.0"
+    "expo-yarn-workspaces": "^2.0.0",
+    "prettier": "^2.7.1",
+    "typescript": "~4.4.4"
   },
   "upstreamPackage": "react-native-vector-image"
 }

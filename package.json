@@ -1,7 +1,7 @@
 {
   "name": "react-native-vector-image-plugin",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Config plugin to auto configure react-native-vector-image on prebuild",
   "main": "build/withVectorImage.js",
   "types": "build/withVectorImage.d.ts",
@@ -17,8 +17,7 @@
     "test": "expo-module test",
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",
-    "expo-module": "expo-module",
-    "postinstall": "expo-yarn-workspaces postinstall"
+    "expo-module": "expo-module"
   },
   "keywords": [
     "react-native",

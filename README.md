@@ -1,39 +1,51 @@
 # react-native-vector-image-plugin
 
-Config plugin to auto configure react-native-vector-image on prebuild
+Config plugin to auto configure `react-native-vector-image` when the native code is generated (`expo prebuild`).
 
-# API documentation
+## Expo installation
 
-- [Documentation for the master branch](https://github.com/expo/expo/blob/master/docs/pages/versions/unversioned/sdk/react-native-vector-image-plugin.md)
-- [Documentation for the latest stable release](https://docs.expo.io/versions/latest/sdk/react-native-vector-image-plugin/)
+> Tested against Expo SDK 45
 
-# Installation in managed Expo projects
+> This package cannot be used in the "Expo Go" app because [it requires custom native code](https://docs.expo.io/workflow/customizing/).
+> First install the package with yarn, npm, or [`expo install`](https://docs.expo.io/workflow/expo-cli/#expo-install).
 
-For managed [managed](https://docs.expo.io/versions/latest/introduction/managed-vs-bare/) Expo projects, please follow the installation instructions in the [API documentation for the latest stable release](#api-documentation). If you follow the link and there is no documentation available then this library is not yet usable within managed projects &mdash; it is likely to be included in an upcoming Expo SDK release.
-
-# Installation in bare React Native projects
-
-For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/expo/expo/tree/master/packages/react-native-unimodules) before continuing.
-
-### Add the package to your npm dependencies
-
-```
-npm install react-native-vector-image-plugin
+```sh
+expo install react-native-vector-image @klarna/react-native-vector-drawable
+expo install @zamplyy/react-native-vector-image-plugin
 ```
 
-// "plugins": [
-//   [
-//     "react-native-vector-image-plugin",
-//     {
-//       "isMonorepo": true,
-//       "customMetroConfigFile": "",
-//       "resetCache": true,
-//       "customEntryFile": ""
-//     }
-//   ]
-// ]
+After installing this npm package, add the [config plugin](https://docs.expo.io/guides/config-plugins/) to the [`plugins`](https://docs.expo.io/versions/latest/config/app/#plugins) array of your `app.json` or `app.config.js`:
 
+```json
+{
+  "expo": {
+    "plugins": ["@zamplyy/react-native-vector-image-plugin"]
+  }
+}
+```
+
+Next, rebuild your app as described in the ["Adding custom native code"](https://docs.expo.io/workflow/customizing/) guide.
+
+#### Example
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "@zamplyy/react-native-vector-image-plugin",
+        {
+          "isMonorepo": false // default false (if enabled will look for node_modules two folders above regular),
+          "customMetroConfigFile": "name of custom mentro config file (default is metro.config.js)",
+          "resetCache": false // Tell CLI to reset metro cache when bundling svgs (default false),
+          "customEntryFile": "name of custom entry file" // Default is index.js
+        }
+      ]
+    ]
+  }
+}
+```
 
 # Contributing
 
-Contributions are very welcome! Please refer to guidelines described in the [contributing guide]( https://github.com/expo/expo#contributing).
+Contributions are very welcome!

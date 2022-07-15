@@ -2,6 +2,15 @@
 
 Config plugin to auto configure `react-native-vector-image` when the native code is generated (`expo prebuild`).
 
+
+Please have a look at ["react-native-vector-image"](https://github.com/oblador/react-native-vector-image) for further instructions.
+
+Some of the benefits are 
+
+- Faster render – ~5x faster than `react-native-svg`.
+- Smaller JS bundle = faster startup.
+- Native support for dark mode.
+
 ## Expo installation
 
 > Tested against Expo SDK 45

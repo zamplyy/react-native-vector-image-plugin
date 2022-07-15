@@ -1,5 +1,5 @@
 {
-  "name": "react-native-vector-image-plugin",
+  "name": "@zamplyy/react-native-vector-image-plugin",
   "license": "MIT",
   "version": "0.1.1",
   "description": "Config plugin to auto configure react-native-vector-image on prebuild",

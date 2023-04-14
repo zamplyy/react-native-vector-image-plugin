@@ -5,9 +5,8 @@ import {
   XcodeProject,
   withXcodeProject,
   withDangerousMod,
-} from "@expo/config-plugins";
-import { ExpoConfig } from "@expo/config-types";
-let MONO_REPO = false;
+} from "expo/config-plugins";
+import path from "path";
 
 export enum GenerateCommands {
   EntryFile = "--entry-file",
@@ -44,7 +43,7 @@ export const addStripSvgsImplementation = (projectBuildGradle: string) => {
   );
 };
 
-const withAndroidPlugin: ConfigPlugin = (config: ExpoConfig) => {
+const withStripSvgsIos: ConfigPlugin = (config) => {
   return withAppBuildGradle(config, ({ modResults, ...config }) => {
     modResults.contents = addStripSvgsImplementation(modResults.contents);
     return { modResults, ...config };
@@ -84,24 +83,18 @@ export const setPBXShellScriptBuildPhaseStripSvg = async (
   return config;
 };
 
-const withIosPlugin: ConfigPlugin = (c: ExpoConfig) => {
+const withStripSvgsAndroid: ConfigPlugin = (c) => {
   return withXcodeProject(c, async (config) => {
     config = await setPBXShellScriptBuildPhaseStripSvg(config);
     return config;
   });
 };
 
-const getCliPath = (projectRoot: string) => {
-  let cliPath;
-  if (MONO_REPO) {
-    cliPath =
-      projectRoot +
-      "/../../node_modules/react-native-vector-image/src/cli/index";
-  } else {
-    cliPath =
-      projectRoot + "/node_modules/react-native-vector-image/src/cli/index";
-  }
-  return cliPath;
+const getCliPath = () => {
+  const packageLocation = path.dirname(
+    require.resolve("react-native-vector-image/package.json")
+  );
+  return path.join(packageLocation, "src/cli/index");
 };
 
 export const getCommands = (commands = DefaultCommands) => {
@@ -118,21 +111,26 @@ export const getCommands = (commands = DefaultCommands) => {
     .join(" ");
 };
 
+const runCli = (cliCommand: string) => {
+  const cliPath = getCliPath();
+  const cli = require(cliPath);
+  if (!cli) {
+    throw new Error("Could not find react-native-vector-image cli");
+  }
+  cli(cliCommand);
+};
+
 export const withGenerateIosAssets: ConfigPlugin<string | void> = (
   config,
   commands
 ) => {
   return withDangerousMod(config, [
     "ios",
-    async (config) => {
+    (config) => {
       const appName = config.modRequest.projectName;
-      const cliPath = getCliPath(config.modRequest.projectRoot);
-      const cli = require(cliPath);
-      if (cli !== undefined || cli !== null) {
-        cli(
-          `generate --ios-output ios/${appName}/Images.xcassets --no-android-output ${commands}`
-        );
-      }
+      runCli(
+        `generate --no-android-output --ios-output ios/${appName}/Images.xcassets ${commands}`
+      );
       return config;
     },
   ]);
@@ -143,30 +141,23 @@ export const withGenerateAndroidAssets: ConfigPlugin<string | void> = (
 ) => {
   return withDangerousMod(config, [
     "android",
-    async (config) => {
-      const cliPath = getCliPath(config.modRequest.projectRoot);
-      const cli = require(cliPath);
-      if (cli !== undefined || cli !== null) {
-        cli(`generate --no-ios-output ${commands}`);
-      }
+    (config) => {
+      runCli(`generate --no-ios-output ${commands}`);
       return config;
     },
   ]);
 };
+type VectorImagePlugin = ConfigPlugin<{
+  customMetroConfigFile?: string;
+  resetCache?: boolean;
+  customEntryFile?: string;
+  stripSvgs?: boolean;
+} | void>;
 
 /**
- * Apply VectorImage configuration for Expo SDK 42 projects.
+ * Apply VectorImage configuration for Expo projects.
  */
-const withVectorImage: ConfigPlugin<
-  {
-    isMonorepo: boolean;
-    customMetroConfigFile: string;
-    resetCache: boolean;
-    customEntryFile: string;
-  } | void
-> = (config, props) => {
-  MONO_REPO = props?.isMonorepo ?? false;
-
+const withVectorImage: VectorImagePlugin = (config, props = {}) => {
   const commands: { command: GenerateCommands; input: string }[] = [];
   if (props?.customEntryFile) {
     commands.push({
@@ -186,10 +177,13 @@ const withVectorImage: ConfigPlugin<
       input: `${props?.resetCache}`,
     });
   }
-  const commandsWithDefault = getCommands();
+  const commandsWithDefault = getCommands(commands);
 
-  config = withAndroidPlugin(config);
-  config = withIosPlugin(config);
+  if (props?.stripSvgs) {
+    config = withStripSvgsIos(config);
+    config = withStripSvgsAndroid(config);
+  }
+
   config = withGenerateIosAssets(config, commandsWithDefault);
   config = withGenerateAndroidAssets(config, commandsWithDefault);
   return config;

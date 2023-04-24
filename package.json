@@ -26,17 +26,19 @@
   "jest": {
     "preset": "expo-module-scripts"
   },
-  "dependencies": {
-    "@expo/config-plugins": "~4.1.5"
+  "peerDependencies": {
+    "expo": "^47.0.0",
+    "react": "*",
+    "react-native": ">=0.70.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.30.6",
     "@typescript-eslint/parser": "^5.30.6",
+    "expo": "^48.0.11",
     "eslint": "^8.19.0",
-    "expo-module-scripts": "^2.0.0",
-    "expo-yarn-workspaces": "^2.0.0",
+    "expo-module-scripts": "^3.0.4",
     "prettier": "^2.7.1",
-    "typescript": "~4.4.4"
+    "typescript": "~4.9.4"
   },
   "upstreamPackage": "react-native-vector-image"
 }

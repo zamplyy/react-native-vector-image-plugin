@@ -44,7 +44,7 @@ Next, rebuild your app as described in the ["Adding custom native code"](https:/
       [
         "@zamplyy/react-native-vector-image-plugin",
         {
-          "isMonorepo": false // default false (if enabled will look for node_modules two folders above regular),
+          "stripSvgs": false // default false (if true, svgs will be removed from bundle. expo-updates package crashes when svgs it expects in the bundle are not there)
           "customMetroConfigFile": "name of custom mentro config file (default is metro.config.js)",
           "resetCache": false // Tell CLI to reset metro cache when bundling svgs (default false),
           "customEntryFile": "name of custom entry file" // Default is index.js

@@ -27,7 +27,7 @@
     "preset": "expo-module-scripts"
   },
   "peerDependencies": {
-    "expo": "^47.0.0",
+    "expo": ">=47.0.0",
     "react": "*",
     "react-native": ">=0.70.0"
   },
